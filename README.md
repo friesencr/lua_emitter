@@ -58,4 +58,3 @@ child.trigger('carnage')
 ```
 
 There are quite a few subtlties not specified in the readme.  I would recommend reading the spec or the source.
-```
