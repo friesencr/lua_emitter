@@ -1,5 +1,13 @@
 Emitter = {}
 
+local function null_or_unpack(val)
+	if val then
+		return unpack(val)
+	else
+		return nil
+	end
+end
+
 -- initalize an event emitter, passing an object to mixin
 function Emitter:new(obj)
 	obj = obj or {}
@@ -66,13 +74,14 @@ function Emitter:once(event, callback)
 end
 
 -- helper for firing callback
-local function fire_callbacks(emitter, event, e, arg)
+local function fire_callbacks(emitter, event, e, ...)
+	local arg = {...}
 	local event_callbacks = emitter.emitter_callbacks[event]
 	if event_callbacks then
 		local i = 1
 		while not e.stop_propagation and i <= # event_callbacks do
 			local registration = event_callbacks[i]
-			registration.callback(registration.this or self, e, arg)
+			registration.callback(registration.this or self, e, null_or_unpack(arg))
 			if registration.once then
 				emitter:off(registration)
 			end
@@ -91,5 +100,5 @@ function Emitter:trigger(event, ...)
 		target = self,
 		stop_propagation = false
 	}
-	fire_callbacks(self, event, e, arg)
+	fire_callbacks(self, event, e, ...)
 end
