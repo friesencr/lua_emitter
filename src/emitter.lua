@@ -1,7 +1,7 @@
 Emitter = {}
 
 -- initalize an event emitter, passing an object to mixin
-function Emitter.new(obj)
+function Emitter:new(obj)
 	obj = obj or {}
 	obj.emitter_callbacks = {}
 	obj.on = Emitter.on
@@ -85,7 +85,7 @@ local function fire_callbacks(emitter, event, e, arg)
 end
 
 -- trigger an event
-function Emitter:trigger(event, arg)
+function Emitter:trigger(event, ...)
 	local e = {
 		name = event,
 		target = self,
