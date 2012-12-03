@@ -4,7 +4,7 @@ local function null_or_unpack(val)
 	if val then
 		return unpack(val)
 	else
-		return nil
+		return val
 	end
 end
 
@@ -20,7 +20,7 @@ function Emitter:new(obj)
 end
 
 -- register an event callback
-function Emitter:on(event, callback, this)
+function Emitter:on(event, callback, predicate, this)
 	assert(event)
 	assert(callback)
 	local event_callbacks = self.emitter_callbacks[event]
@@ -28,7 +28,7 @@ function Emitter:on(event, callback, this)
 		event_callbacks = {}
 		self.emitter_callbacks[event] = event_callbacks
 	end
-	local registration = { callback = callback, this = this, event = event }
+	local registration = { callback = callback, this = this, event = event, predicate = predicate }
 	table.insert(event_callbacks, registration)
 	return registration
 end
@@ -60,7 +60,7 @@ function Emitter:off(arg1, callback)
 end
 
 -- register a callback that only fires once
-function Emitter:once(event, callback)
+function Emitter:once(event, callback, predicate, this)
 	assert(event)
 	assert(callback)
 	local event_callbacks = self.emitter_callbacks[event]
@@ -68,7 +68,7 @@ function Emitter:once(event, callback)
 		event_callbacks = {}
 		self.emitter_callbacks[event] = event_callbacks
 	end
-	local registration = { callback = callback, this = this, once = true, event = event }
+	local registration = { callback = callback, this = this, once = true, event = event, predicate = predicate }
 	table.insert(event_callbacks, registration)
 	return registration
 end
@@ -81,9 +81,11 @@ local function fire_callbacks(emitter, event, e, ...)
 		local i = 1
 		while not e.stop_propagation and i <= # event_callbacks do
 			local registration = event_callbacks[i]
-			registration.callback(registration.this or self, e, null_or_unpack(arg))
-			if registration.once then
-				emitter:off(registration)
+			if not registration.predicate or registration.predicate(emitter, e) then
+				registration.callback(registration.this or emitter, e, null_or_unpack(arg))
+				if registration.once then
+					emitter:off(registration)
+				end
 			end
 			i = i+1
 		end
@@ -102,3 +104,5 @@ function Emitter:trigger(event, ...)
 	}
 	fire_callbacks(self, event, e, ...)
 end
+
+
